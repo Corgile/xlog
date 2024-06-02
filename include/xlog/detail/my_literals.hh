@@ -1,10 +1,10 @@
 //
-// logging / my_literals.hh
+// xlog / my_literals.hh
 // Created by brian on 2024-06-03.
 //
 
-#ifndef LOGGING_MY_LITERALS_HH
-#define LOGGING_MY_LITERALS_HH
+#ifndef XLOG_MY_LITERALS_HH
+#define XLOG_MY_LITERALS_HH
 namespace xlog::literals {
 constexpr unsigned long long operator ""_B(unsigned long long bytes) {
   return bytes;
@@ -22,4 +22,4 @@ constexpr unsigned long long operator ""_GB(unsigned long long gigabytes) {
   return gigabytes << 30;
 }
 }
-#endif //LOGGING_MY_LITERALS_HH
+#endif // XLOG_MY_LITERALS_HH

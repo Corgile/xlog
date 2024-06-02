@@ -1,10 +1,13 @@
 //
-// logging / logger.hh
+// xlog / logger.hh
 // Created by brian on 2024-06-02.
 //
 
-#ifndef LOGGING_SINK_HH
-#define LOGGING_SINK_HH
+#ifndef XLOG_SINK_HH
+#define XLOG_SINK_HH
+
+#include "xlog/detail/record.hh"
+#include "xlog/vendor/concurrent_queue.hh"
 
 #include <charconv>
 #include <condition_variable>
@@ -15,9 +18,6 @@
 #include <string>
 #include <string_view>
 #include <system_error>
-
-#include "logging/detail/record.hh"
-#include "logging/vendor/concurrent_queue.hh"
 
 namespace xlog {
 namespace helper {
@@ -34,12 +34,6 @@ inline void toInt(int num, char* p, int& size) {
 }
 
 inline char* getTimeStr(const auto& now) {
-//  static std::stringstream ss;
-//  auto epoch_time = std::chrono::system_clock::to_time_t(now);
-//  ss.str(std::string());
-//  ss.clear();
-//  ss << std::put_time(std::localtime(&epoch_time), "%Y-%m-%d %H:%M:%S");
-//  return std::move(ss.str());
   static thread_local char buf[24];
   static thread_local std::chrono::seconds last_sec_{};
 
@@ -81,7 +75,7 @@ inline std::string_view LevelStr(Level level) {
     case Level::ERROR:return "ERROR ";
     case Level::FATAL:return "FATAL ";
     default:          return "NONE  ";
-      // @format:on
+    // @format:on
   }
 }
 
@@ -125,36 +119,35 @@ enum class color_type : int {
   }
 #endif
 
-std::string_view addColor(Level level) {
-#if defined(_WIN32)
+inline std::string_view addColor(Level level) {
+  #if defined(_WIN32)
   if (level == Level::WARN)
       windows_set_color(color_type::black, color_type::yellow);
     if (level == Level::ERROR)
       windows_set_color(color_type::black, color_type::red);
     if (level == Level::FATAL)
       windows_set_color(color_type::white_bright, color_type::red);
-#elif __APPLE__
-#else
+  #elif __APPLE__
+  #else
   if (level == Level::WARN) return "\x1B[93;1m";
   if (level == Level::ERROR) return "\x1B[91;1m";
   if (level == Level::FATAL) return "\x1B[97;1m\x1B[41m";
-#endif
+  #endif
   return {};
 }
 
-std::string_view cleanColor(Level level) {
-#if defined(_WIN32)
+inline std::string_view cleanColor(Level level) {
+  #if defined(_WIN32)
   if (level >= Level::WARN)
       windows_set_color(color_type::white, color_type::black);
-#elif __APPLE__
-#else
-  if (level >= Level::WARN)
-    return "\x1B[0m\x1B[0K";
-#endif
+  #elif __APPLE__
+  #else
+  if (level >= Level::WARN) return "\x1B[0m\x1B[0K";
+  #endif
   return {};
 }
 
-std::string_view getTidBuf(unsigned int tid) {
+inline std::string_view getTidBuf(unsigned int tid) {
   static thread_local char buf[24];
   static thread_local unsigned int last_tid;
   static thread_local size_t last_len;
@@ -182,9 +175,11 @@ struct empty_mutex {
 
 constexpr inline std::string_view BOM_STR = "\xEF\xBB\xBF";
 
+/// @brief 日志消息消费者，默认支持file和console
 class Sink {
 public:
-  Sink() = default;
+  using ptr = Sink*;
+  Sink()    = default;
 
   Sink(const std::string& filename, bool async, bool enableConsole,
        size_t fileMaxSize, size_t maxFileCount, bool realTimeFlush)
@@ -223,7 +218,7 @@ public:
   }
 
   template<bool sync>
-  auto& getMutex() {
+  auto& IoStreamMtx() {
     if constexpr (sync) {
       return mtx_;
     } else {
@@ -231,18 +226,18 @@ public:
     }
   }
 
-  template<bool sync = false, bool console = false>
+  template<bool synced = false, bool console = false>
   void writeRecord(record_t& record) {
-    std::lock_guard guard(getMutex<sync>());
-    if constexpr (sync) {
-      if (maxFileCount_ > 0 && currFileSize_ > fileMaxSize_ &&
-          static_cast<size_t>(-1) != currFileSize_) {
+    std::lock_guard guard(IoStreamMtx<synced>());
+    if constexpr (synced) {
+      if (maxFileCount_ > 0
+          && currFileSize_ > fileMaxSize_
+          && static_cast<size_t>(-1) != currFileSize_) {
         rollLogFiles();
       }
     }
 
     auto timeStr = helper::getTimeStr(record.getTimePoint());
-
     auto levelStr = helper::LevelStr(record.getLevel());
     auto tidStr = helper::getTidBuf(record.getThreadId());
     auto fileStr = record.getFileStr();
@@ -402,6 +397,7 @@ private:
   size_t fileMaxSize_ = 0;
   size_t maxFileCount_ = 0;
 
+  /// 输出流
   std::shared_mutex mtx_;
   empty_mutex empty_;
   std::ofstream file_;
@@ -414,4 +410,4 @@ private:
   std::atomic<bool> stopped_ = false;
 };
 }
-#endif //LOGGING_SINK_HH
+#endif // XLOG_SINK_HH

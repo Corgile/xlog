@@ -1,10 +1,10 @@
 //
-// logging / level.hh
+// xlog / level.hh
 // Created by brian on 2024-06-03.
 //
 
-#ifndef LOGGING_LEVEL_HH
-#define LOGGING_LEVEL_HH
+#ifndef XLOG_LEVEL_HH
+#define XLOG_LEVEL_HH
 
 namespace xlog {
 
@@ -20,4 +20,4 @@ enum class Level {
 
 } // xhl
 
-#endif //LOGGING_LEVEL_HH
+#endif //XLOG_LEVEL_HH

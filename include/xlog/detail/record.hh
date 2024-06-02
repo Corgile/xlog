@@ -1,20 +1,20 @@
 //
-// logging / record.hh
+// xlog / record.hh
 // Created by brian on 2024-06-02.
 //
 
-#ifndef LOGGING_RECORD_HH
-#define LOGGING_RECORD_HH
+#ifndef XLOG_RECORD_HH
+#define XLOG_RECORD_HH
+
+#include "xlog/detail/level.hh"
+#include "xlog/detail/time_util.hh"
+#include "xlog/vendor/dragonbox_to_chars.h"
+#include "xlog/vendor/meta_string.hpp"
 
 #include <charconv>
 #include <chrono>
-#include <ostream>
 #include <iomanip>
-#include "logging/vendor/dragonbox_to_chars.h"
-#include "logging/vendor/meta_string.hpp"
-#include "logging/detail/time_util.hh"
-#include "logging/detail/my_traits.hh"
-#include "logging/detail/level.hh"
+#include <ostream>
 
 namespace xlog {
 namespace detail {
@@ -117,8 +117,7 @@ public:
       content_.append(data.data());
     } else if constexpr (detail::has_str_v<U>) {
       content_.append(data.str());
-    } else if constexpr (std::is_same_v<std::chrono::system_clock::time_point,
-      U>) {
+    } else if constexpr (std::is_same_v<std::chrono::system_clock::time_point, U>) {
       content_.append(xlog::time_util::get_local_time_str(data));
     } else {
       std::stringstream ss;
@@ -141,48 +140,20 @@ public:
     return *this;
   }
 
-//  friend std::ostream& operator<<(std::ostream& os, record_t const& record) {
-//    os << /*时间戳  */  helper::getTimeStr(record.getTimePoint())
-//       << /*日志级别*/   helper::LevelStr(record.getLevel())
-//       << /*线程ID  */  record.getThreadId()
-//       << /*协程ID  */  record.fiberId_
-//       << /*日志ID  */  record.loggerId_
-//       << /*日志名称 */  record.getLoggerName()
-//       << /*文件位置 */  record.getFileStr()
-//       << /*日志消息 */  record.content_
-//       << /*换行符   */ "\n";
-//    return os;
-//  }
-//
-//  std::string toString() {
-//    std::string msg;
-//    msg.append(helper::addColor(getLevel()))
-//      .append(helper::getTimeStr(getTimePoint()))
-//      .append(helper::LevelStr(getLevel()))
-//      .append(helper::cleanColor(getLevel()))
-//      .append(helper::getTidBuf(getTid()))
-//      .append(getFileStr())
-//      .append(getMessage());
-//    return msg;
-//  }
-
 private:
   template<typename... Args>
   void printf_string_format(const char* fmt, Args&& ...args) {
     size_t size = snprintf(nullptr, 0, fmt, std::forward<Args>(args)...);
-
-#ifdef LOGGING_ENABLE_PMR
-  #if __has_include(<memory_resource>)
+#if defined(XLOG_ENABLE_PMR) and __has_include(<memory_resource>)
     char arr[1024];
     std::pmr::monotonic_buffer_resource resource(arr, 1024);
     std::pmr::string buf{&resource};
-  #endif
 #else
     std::string buf;
 #endif
     buf.reserve(size + 1);
     buf.resize(size);
-    snprintf(buf.c_str(), size + 1, fmt, args...);
+    snprintf(buf.data(), size + 1, fmt, args...);
     content_.append(buf);
   }
 
@@ -194,23 +165,23 @@ private:
 
   ///@brief 获取线程ID不同平台的实现
   unsigned int getTidImpl() {
-#ifdef _WIN32
+    #ifdef _WIN32
     return std::hash<std::thread::id>{}(std::this_thread::get_id());
-#elif defined(__linux__)
+    #elif defined(__linux__)
     return static_cast<unsigned int>(::syscall(__NR_gettid));
-#elif defined(__FreeBSD__)
+    #elif defined(__FreeBSD__)
     long tid;
     syscall(SYS_thr_self, &tid);
     return static_cast<unsigned int>(tid);
-#elif defined(__rtems__)
+    #elif defined(__rtems__)
     return rtems_task_self();
-#elif defined(__APPLE__)
+    #elif defined(__APPLE__)
     uint64_t tid64;
     pthread_threadid_np(NULL, &tid64);
     return static_cast<unsigned int>(tid64);
-#else
+    #else
     return 0;
-#endif
+    #endif
   }
 
   time_point_t timePoint_;
@@ -220,12 +191,10 @@ private:
   size_t loggerId_{0};
   std::string loggerName_{"root"};
   std::string fileStr_;
-#ifdef LOGGING_ENABLE_PMR
-  #if __has_include(<memory_resource>)
+#if defined(XLOG_ENABLE_PMR) and __has_include(<memory_resource>)
   char arr_[1024];
   std::pmr::monotonic_buffer_resource resource_;
   std::pmr::string ss_{&resource_};
-  #endif
 #else
   std::string content_;
 #endif
@@ -243,6 +212,5 @@ private:
     constexpr auto prefix = name + ":" + TO_STR(line);          \
     return "[" + prefix + "] ";                                 \
   }()
-
 }
-#endif //LOGGING_RECORD_HH
+#endif // XLOG_RECORD_HH

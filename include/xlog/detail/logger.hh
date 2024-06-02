@@ -1,10 +1,10 @@
 //
-// logging / logger.hh
+// xlog / logger.hh
 // Created by brian on 2024-06-03.
 //
 
-#ifndef LOGGING_LOGGER_HH
-#define LOGGING_LOGGER_HH
+#ifndef XLOG_LOGGER_HH
+#define XLOG_LOGGER_HH
 
 #if __has_include(<format>)
   #include <format>
@@ -19,17 +19,16 @@
   #endif
 #endif
 
+#include "xlog/detail/my_literals.hh"
+#include "xlog/detail/record.hh"
+#include "xlog/detail/sink.hh"
+
 #include <functional>
 #include <string_view>
 #include <utility>
 #include <vector>
-#include "logging/detail/my_literals.hh"
-#include "logging/detail/record.hh"
-#include "logging/detail/sink.hh"
 
 namespace xlog {
-
-constexpr inline std::string_view LOGGER_NAME = "root";
 
 template<size_t ID = 0>
 class Logger {
@@ -41,7 +40,7 @@ public:
 
   ///@brief 进行日志记录
   void log(record_t& record) {
-    if (async_ && pSink_) {
+    if (async_ and pSink_) {
       appendRecord(std::move(record));
     } else {
       appendFormat(record);
@@ -62,11 +61,10 @@ public:
   void init(Level minLevel, bool async, bool console,
             std::string const& filename, size_t fileMaxSize,
             size_t maxFileCount, bool alwaysFlush) {
-
     static Sink sink(filename, async, console, fileMaxSize, maxFileCount, alwaysFlush);
     async_ = async;
     pSink_ = &sink;
-    minLevel_ = minLevel;
+    minLevel_      = minLevel;
     enableConsole_ = console;
   }
 
@@ -99,6 +97,7 @@ public:
 private:
   Logger() {
     static Sink sink{};
+    /// TODO: 这里可以进行多线程支持
     sink.startThread();
     sink.enableConsole(true);
     async_ = true;
@@ -120,16 +119,17 @@ private:
 
   Level minLevel_ =
 #if NDEBUG
-    Level::WARN;
+      Level::WARN;
 #else
-    Level::TRACE;
+      Level::TRACE;
 #endif
-  bool async_ = false;
-  bool enableConsole_ = true;
-  Sink* pSink_ = nullptr;
+  bool      async_         = false;
+  bool      enableConsole_ = true;
+  Sink::ptr pSink_         = nullptr;
+  /// 其他下游日志消息消费者
   std::vector<std::function<void(std::string_view)>> sinks_;
 };
 
 } // xhl
 
-#endif //LOGGING_LOGGER_HH
+#endif // XLOG_LOGGER_HH
