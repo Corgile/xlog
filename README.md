@@ -46,7 +46,7 @@ int main() {
 
 ```c++
 //
-// xlog / file.cc
+// xlog / file.cc 
 // Created by brian on 2024-06-04.
 //
 #include "xlog/api.hh"
@@ -88,6 +88,8 @@ int main() {
 
 ## TODO
 
+- 整合yml-cpp
+- 配置热加载
 - 多线程logger支持
-- 自定义logger name
+- 支持daily logger
 - ...
