@@ -27,8 +27,16 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+// #define ENABLE_DEV_DEBUG
+#ifdef ENABLE_DEV_DEBUG
+  #define DEV_DEBUG(x) x
+#else
+  #define DEV_DEBUG(x)
+#endif
 
 namespace xlog {
+using namespace xlog::util;
+
 class ILogger {
 public:
   using sptr = std::shared_ptr<ILogger>;
@@ -92,16 +100,18 @@ protected:
   std::vector<std::function<void(std::string_view)>> sinks_;
 };
 
-using namespace xlog::util;
 template<size_t ID = "UnNamed"_hash>
 class Logger final : public ILogger {
   using ptr = std::shared_ptr<Logger>;
 
 public:
   static ILogger::sptr getInstance(std::string_view name = "UnNamed") {
-    if (allLoggers.contains(hashed(name))) {
-      return allLoggers.at(hashed(name));
+    DEV_DEBUG(std::cout << __FUNCTION__ << "  " << ID << "  " << hashed(name) << "\n");
+    if (allLoggers.contains(ID)) [[likely]] {
+      DEV_DEBUG(std::cout << __FUNCTION__ << "  " << name << "  contain\n");
+      return allLoggers.at(ID);
     }
+    DEV_DEBUG(std::cout << __FUNCTION__ << "  " << name << "  NO contain\n");
     static Logger<ID>::sptr instance = Logger::createInstance();
     instance->setName(name);
     instance->setHash(hashed(name));

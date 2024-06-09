@@ -32,7 +32,7 @@ inline std::unordered_map<size_t, std::string>                    names;
 template<size_t ID = "UnNamed"_hash>
 inline void InstantiateFileLogger(Level level, std::string const& filename = {}, bool async = true, bool console = true,
                                   size_t fileMaxSize = 10_KB, size_t maxFileCount = 1, bool alwaysFlush = false) {
-  Logger<ID>::getInstance().init(level, async, console, filename, fileMaxSize, maxFileCount, alwaysFlush);
+  Logger<ID>::getInstance()->init(level, async, console, filename, fileMaxSize, maxFileCount, alwaysFlush);
 }
 
 /// @brief 修改日志记录级别

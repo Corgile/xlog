@@ -16,7 +16,7 @@
     instance_(name) += xlog::record_t(now_, level, GET_STRING(__FILE__, __LINE__)).ref()
 
 #ifndef XLOG
-  #define XLOG(level, ...) XLOG_IMPL(xlog::Level::level, __VA_ARGS__, "UnNamed")
+  #define XLOG(level, ...) XLOG_IMPL(xlog::Level::level, __VA_ARGS__)
 #endif
 
 #define XLOGV_IMPL(level, name, fmt, ...)                                                                              \
@@ -60,18 +60,21 @@
   #ifndef XLOGFMT
     #define XLOGFMT(level, ...) XLOGFMT_IMPL(xlog::Level::level, "UnNamed", __VA_ARGS__)
   #endif
+
+  /// named logger
   #ifndef MXLOGFMT
     #define MXLOGFMT(level, name, ...) XLOGFMT_IMPL(xlog::Level::level, name, __VA_ARGS__)
   #endif
 #endif
 
-#define XLOG_TRACE XLOG(TRACE)
-#define XLOG_DEBUG XLOG(DEBUG)
-#define XLOG_INFO  XLOG(INFO)
-#define XLOG_WARN  XLOG(WARN)
-#define XLOG_ERROR XLOG(ERROR)
-#define XLOG_FATAL XLOG(FATAL)
+#define XLOG_TRACE XLOG(TRACE, "UnNamed")
+#define XLOG_DEBUG XLOG(DEBUG, "UnNamed")
+#define XLOG_INFO  XLOG(INFO, "UnNamed")
+#define XLOG_WARN  XLOG(WARN, "UnNamed")
+#define XLOG_ERROR XLOG(ERROR, "UnNamed")
+#define XLOG_FATAL XLOG(FATAL, "UnNamed")
 
+/// named logger
 #ifndef MXLOG_TRACE
   #define MXLOG_TRACE(name) XLOG(TRACE, name)
 #endif
