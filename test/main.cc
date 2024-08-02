@@ -6,18 +6,18 @@ int main() {
   xlog::setLogLevelTo(xlog::Level::TRACE);
   xlog::toggleConsoleLogging(TOGGLE_ON);
   xlog::toggleAsyncLogging(TOGGLE_OFF);
-  constexpr std::string_view systemLogger = "SystemLogger";
+  constexpr std::string_view systemLogger = "System";
   XLOG_TRACE << "你好世界";
   XLOG_DEBUG << "你好世界";
   XLOG_INFO << "你好世界";
   XLOG_WARN << "你好世界";
   XLOG_ERROR << "你好世界";
-  xlog::toggleConsoleLogging<xlog::util::hashed(systemLogger)>(TOGGLE_ON);
+  xlog::toggleConsoleLogging<hashed(systemLogger)>(TOGGLE_ON);
   MXLOG_TRACE(systemLogger) << "你好世界";
   MXLOG_DEBUG(systemLogger) << "你好世界";
   MXLOG_INFO(systemLogger) << "你好世界";
   MXLOG_WARN(systemLogger) << "你好世界";
-  MXLOG_ERROR(systemLogger) << "你好世界";
+  MXLOG_ERROR(systemLogger) << "你好世界" << 12.3;
   XLOGV(INFO, "%s", "你好世界");
   MXLOGV(WARN, systemLogger, "%s", "你好世界");
 #if __has_include(<fmt/format.h> ) or __has_include(<format>)

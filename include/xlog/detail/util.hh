@@ -38,7 +38,7 @@ constexpr size_t operator""_hash(const char* char_, const size_t length) {
 
 inline std::string getName(const size_t id) {
   if (not names.contains(id))
-    names[id] = "UnNamed";
+    names[id] = logger_default_name;
   return names[id];
 }
 constexpr unsigned long long operator""_B(unsigned long long bytes) {

@@ -19,6 +19,7 @@
   #endif
 #endif
 
+#include "xlog/detail/config.hh"
 #include "xlog/detail/record.hh"
 #include "xlog/detail/sink.hh"
 #include "xlog/detail/util.hh"
@@ -100,12 +101,12 @@ protected:
   std::vector<std::function<void(std::string_view)>> sinks_;
 };
 
-template<size_t ID = "UnNamed"_hash>
+template<size_t ID = hashed(logger_default_name)>
 class Logger final : public ILogger {
   using ptr = std::shared_ptr<Logger>;
 
 public:
-  static ILogger::sptr getInstance(std::string_view name = "UnNamed") {
+  static ILogger::sptr getInstance(std::string_view name = logger_default_name) {
     DEV_DEBUG(std::cout << __FUNCTION__ << "  " << ID << "  " << hashed(name) << "\n");
     if (allLoggers.contains(ID)) [[likely]] {
       DEV_DEBUG(std::cout << __FUNCTION__ << "  " << name << "  contain\n");

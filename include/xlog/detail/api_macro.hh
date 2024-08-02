@@ -6,6 +6,8 @@
 #ifndef XLOG_API_MACRO_HH
 #define XLOG_API_MACRO_HH
 
+#include "xlog/detail/config.hh"
+
 #define now_               std::chrono::system_clock::now()
 #define instance_ptr(name) xlog::Logger<xlog::util::hashed(std::string_view(name))>::getInstance(name)
 #define instance_(name)    (*instance_ptr(name))
@@ -31,7 +33,7 @@
     } while (false)
 
 #ifndef XLOGV
-  #define XLOGV(level, ...) XLOGV_IMPL(xlog::Level::level, "UnNamed", __VA_ARGS__, "\n")
+  #define XLOGV(level, ...) XLOGV_IMPL(xlog::Level::level, logger_default_name, __VA_ARGS__, "\n")
 #endif
 
 #ifndef MXLOGV
@@ -58,7 +60,7 @@
   #endif
 
   #ifndef XLOGFMT
-    #define XLOGFMT(level, ...) XLOGFMT_IMPL(xlog::Level::level, "UnNamed", __VA_ARGS__)
+    #define XLOGFMT(level, ...) XLOGFMT_IMPL(xlog::Level::level, logger_default_name, __VA_ARGS__)
   #endif
 
   /// named logger
@@ -67,12 +69,12 @@
   #endif
 #endif
 
-#define XLOG_TRACE XLOG(TRACE, "UnNamed")
-#define XLOG_DEBUG XLOG(DEBUG, "UnNamed")
-#define XLOG_INFO  XLOG(INFO, "UnNamed")
-#define XLOG_WARN  XLOG(WARN, "UnNamed")
-#define XLOG_ERROR XLOG(ERROR, "UnNamed")
-#define XLOG_FATAL XLOG(FATAL, "UnNamed")
+#define XLOG_TRACE XLOG(TRACE, logger_default_name)
+#define XLOG_DEBUG XLOG(DEBUG, logger_default_name)
+#define XLOG_INFO  XLOG(INFO, logger_default_name)
+#define XLOG_WARN  XLOG(WARN, logger_default_name)
+#define XLOG_ERROR XLOG(ERROR, logger_default_name)
+#define XLOG_FATAL XLOG(FATAL, logger_default_name)
 
 /// named logger
 #ifndef MXLOG_TRACE

@@ -8,13 +8,10 @@
 
 #include "xlog/detail/level.hh"
 #include "xlog/detail/time_util.hh"
-#include "xlog/vendor/dragonbox_to_chars.h"
 #include "xlog/vendor/meta_string.hpp"
 
 #include <charconv>
 #include <chrono>
-#include <iomanip>
-#include <ostream>
 
 namespace xlog {
 namespace detail {
@@ -90,9 +87,10 @@ public:
   record_t& operator<<(const T& data) {
     using U = std::remove_cvref_t<T>;
     if constexpr (std::is_floating_point_v<U>) {
-      char       temp[40];
-      const auto end = jkj::dragonbox::to_chars(data, temp);
-      content_.append(temp, std::distance(temp, end));
+      std::array<char, 64> buff;
+      auto result = std::to_chars(buff.begin(), buff.end(), data);
+      *result.ptr = '\0';
+      content_.append(buff.data());
     } else if constexpr (std::is_same_v<bool, U>) {
       data ? content_.append("true") : content_.append("false");
     } else if constexpr (std::is_same_v<char, U>) {
@@ -191,7 +189,7 @@ private:
   uint32_t     tid_;
   uint32_t     fiberId_ = 0; // 协程id
   size_t       loggerId_{0};
-  std::string  loggerName_{"UnNamed"};
+  std::string  loggerName_{logger_default_name};
   std::string  fileStr_;
 #if defined(XLOG_ENABLE_PMR) and __has_include(<memory_resource> )
   char                                arr_[1024];
