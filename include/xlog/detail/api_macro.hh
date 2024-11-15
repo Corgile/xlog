@@ -9,7 +9,7 @@
 #include "xlog/detail/config.hh"
 
 #define now_               std::chrono::system_clock::now()
-#define instance_ptr(name) xlog::Logger<xlog::util::hashed(std::string_view(name))>::getInstance(name)
+#define instance_ptr(name) xlog::Logger<xlog::util::hashed(std::string_view(name))>::Instance(name)
 #define instance_(name)    (*instance_ptr(name))
 
 #define XLOG_IMPL(level, name, ...)                                                                                    \
@@ -97,4 +97,5 @@
 #endif
 #define TOGGLE_ON  true
 #define TOGGLE_OFF false
+#define HAVE_XLOG
 #endif // XLOG_API_MACRO_HH

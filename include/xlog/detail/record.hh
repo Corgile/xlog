@@ -16,15 +16,15 @@
 namespace xlog {
 namespace detail {
 template<class T>
-constexpr inline bool c_array_v =
-    std::is_array_v<std::remove_cvref_t<T>> && (std::extent_v<std::remove_cvref_t<T>> > 0);
+constexpr inline bool c_array_v = std::is_array_v<std::remove_cvref_t<T>> &&
+                                  (std::extent_v<std::remove_cvref_t<T>> > 0);
 
 template<typename Type, typename = void>
 struct has_data : std::false_type {};
 
 template<typename T>
-struct has_data<T, std::void_t<decltype(std::declval<std::string>().append(std::declval<T>().data()))>>
-    : std::true_type {};
+struct has_data<T, std::void_t<decltype(std::declval<std::string>().append(
+                       std::declval<T>().data()))>> : std::true_type {};
 
 template<typename T>
 constexpr inline bool has_data_v = has_data<std::remove_cvref_t<T>>::value;
@@ -33,8 +33,8 @@ template<typename Type, typename = void>
 struct has_str : std::false_type {};
 
 template<typename T>
-struct has_str<T, std::void_t<decltype(std::declval<std::string>().append(std::declval<T>().str()))>> : std::true_type {
-};
+struct has_str<T, std::void_t<decltype(std::declval<std::string>().append(
+                      std::declval<T>().str()))>> : std::true_type {};
 
 template<typename T>
 constexpr inline bool has_str_v = has_str<std::remove_cvref_t<T>>::value;
@@ -87,7 +87,7 @@ public:
   record_t& operator<<(const T& data) {
     using U = std::remove_cvref_t<T>;
     if constexpr (std::is_floating_point_v<U>) {
-      std::array<char, 64> buff;
+      std::array<char, 64> buff{};
       auto result = std::to_chars(buff.begin(), buff.end(), data);
       *result.ptr = '\0';
       content_.append(buff.data());
@@ -96,8 +96,7 @@ public:
     } else if constexpr (std::is_same_v<char, U>) {
       content_.push_back(data);
     } else if constexpr (std::is_enum_v<U>) {
-      int val = (int)data;
-      *this << val;
+      *this << static_cast<int>(data);
     } else if constexpr (std::is_integral_v<U>) {
       char buf[32];
       auto [ptr, err] = std::to_chars(buf, buf + 32, data);
@@ -106,7 +105,8 @@ public:
       char buf[32]    = {"0x"};
       auto [ptr, err] = std::to_chars(buf + 2, buf + 32, (uintptr_t)data, 16);
       content_.append(buf, std::distance(buf, ptr));
-    } else if constexpr (std::is_same_v<std::string, U> || std::is_same_v<std::string_view, U>) {
+    } else if constexpr (std::is_same_v<std::string, U> ||
+                         std::is_same_v<std::string_view, U>) {
       content_.append(data.data(), data.size());
     } else if constexpr (detail::c_array_v<U>) {
       content_.append(data);
@@ -114,7 +114,8 @@ public:
       content_.append(data.data());
     } else if constexpr (detail::has_str_v<U>) {
       content_.append(data.str());
-    } else if constexpr (std::is_same_v<std::chrono::system_clock::time_point, U>) {
+    } else if constexpr (std::is_same_v<std::chrono::system_clock::time_point,
+                                        U>) {
       content_.append(xlog::time_util::get_local_time_str(data));
     } else {
       std::stringstream ss;
@@ -143,7 +144,7 @@ public:
 private:
   template<typename... Args>
   void printf_string_format(const char* fmt, Args&&... args) {
-    size_t size = snprintf(nullptr, 0, fmt, std::forward<Args>(args)...);
+    size_t const size{snprintf(nullptr, 0, fmt, std::forward<Args>(args)...)};
 #if defined(XLOG_ENABLE_PMR) and __has_include(<memory_resource> )
     char                                arr[1024];
     std::pmr::monotonic_buffer_resource resource(arr, 1024);
@@ -164,7 +165,7 @@ private:
   }
 
   ///@brief 获取线程ID不同平台的实现
-  unsigned int getTidImpl() {
+  static unsigned int getTidImpl() {
 #ifdef _WIN32
     return std::hash<std::thread::id>{}(std::this_thread::get_id());
 #elif defined(__linux__)
@@ -186,8 +187,7 @@ private:
 
   time_point_t timePoint_;
   Level        level_;
-  uint32_t     tid_;
-  uint32_t     fiberId_ = 0; // 协程id
+  uint32_t     tid_{};
   size_t       loggerId_{0};
   std::string  loggerName_{logger_default_name};
   std::string  fileStr_;
@@ -203,11 +203,12 @@ private:
 #define TO_STR(s) #s
 
 /// 一个lambda函数的执行结果
-#define GET_STRING(filename, line)                                                                                     \
-  [] {                                                                                                                 \
-    constexpr auto   path   = refvalue::meta_string{filename};                                                         \
-    constexpr size_t pos    = path.rfind(std::filesystem::path::preferred_separator);                                  \
-    constexpr auto   name   = path.substr<pos + 1>();                                                                  \
+#define GET_STRING(filename, line)                                             \
+  [] {                                                                         \
+    constexpr auto   path = refvalue::meta_string{filename};                   \
+    constexpr size_t pos =                                                     \
+        path.rfind(std::filesystem::path::preferred_separator);                \
+    constexpr auto name   = path.substr<pos + 1>();                            \
     constexpr auto prefix = name + ":" + TO_STR(line);          \
     return "[" + prefix + "] ";                                 \
   }()
